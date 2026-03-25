@@ -182,54 +182,47 @@ async def work_visual(message: types.Message):
     await message.reply(f"⚒ Ты **{job[0]}** и получил ` {salary} GC `!")
 
 @dp.message(Command("казино", "слоты", prefix="."))
-async def casino_pro_visual(message: types.Message):
+async def casino_visual(message: types.Message):
     u = get_u(message.from_user)
     args = message.text.split()
     
-    if len(args) < 2 or not args[1].isdigit():
-        return await message.reply("⚠️ Формат: `.казино [ставка]`")
+    if len(args) < 2 or not args[1].isdigit(): 
+        return await message.reply("🎰 Введи ставку! Пример: <code>.слоты 100</code>", parse_mode="HTML")
     
     bet = int(args[1])
-    if bet > u["coins"] or bet <= 0:
-        return await message.reply("🚫 Недостаточно GC или неверная ставка!")
+    if bet > u["coins"] or bet <= 0: 
+        return await message.reply("❌ Недостаточно коинов для такой ставки!")
 
-    # КРАСИВЫЕ КРУТЯЩИЕСЯ БАРАБАНЫ
-    msg = await message.answer("🎰 **КРУТИМ СЛОТЫ...**")
-    symbols = ["💎", "🎰", "🍋", "🍒", "💩"]
+    # Смайлики для анимации
+    slots_icons = ["💎", "🎰", "🍋", "🍒", "💩", "🔔", "⭐"]
     
-    # Анимация кручения
-    spin_frames = [
-        f"🎰 | 💎 | 🍋 | 🍒 |",
-        f"🎰 | 🍋 | 💎 | 🎰 |",
-        f"🎰 | 🎰 | 🍒 | 💎 |"
-    ]
+    # 1. Создаем сообщение с анимацией
+    msg = await message.answer("🎰 <b>[ 🎰 | 🎰 | 🎰 ]</b>\n<i>Крутим барабаны...</i>", parse_mode="HTML")
     
+    # 2. Имитация кручения (3 этапа)
     for _ in range(3):
-        await msg.edit_text(random.choice(spin_frames))
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.7) # Небольшая пауза между кадрами
+        fake_res = [random.choice(slots_icons) for _ in range(3)]
+        await msg.edit_text(f"🎰 <b>[ {' | '.join(fake_res)} ]</b>\n<i>Барабаны вращаются...</i>", parse_mode="HTML")
 
-    # Финальный результат
-    res = [random.choice(symbols) for _ in range(3)]
-    line = " | ".join(res)
+    # 3. Финальный результат
+    res = [random.choice(slots_icons[:5]) for _ in range(3)] # Берем основные иконки
     
-    if res[0] == res[1] == res[2]: # Джекпот
+    if res[0] == res[1] == res[2]:
         u["coins"] += bet * 15
-        result = f"🔥 **ДЖЕКПОТ!** Выигрыш: `+{bet * 15}` GC"
-    elif res[0] == res[1] or res[1] == res[2] or res[0] == res[2]: # Пара
+        win_text = f"🔥 <b>ДЖЕКПОТ! x15</b>\nВыигрыш: <code>+{bet*15} GC</code>"
+    elif res[0] == res[1] or res[1] == res[2] or res[0] == res[2]:
         u["coins"] += bet * 2
-        result = f"✅ **ПОБЕДА!** Выигрыш: `+{bet * 2}` GC"
-    else: # Проигрыш
+        win_text = f"✅ <b>Победа! x2</b>\nВыигрыш: <code>+{bet*2} GC</code>"
+    else:
         u["coins"] -= bet
-        result = f"❌ **ПРОИГРЫШ!** Потеряно: `-{bet}` GC"
-        
+        win_text = f"❌ <b>Проигрыш!</b>\nПотеряно: <code>-{bet} GC</code>"
+    
     save_db()
     
-    final_text = (f"🎰 **КАЗИНО ГЛИТЧА**\n"
-                  f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
-                  f"| {line} |\n"
-                  f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n"
-                  f"{result}")
-    await msg.edit_text(final_text, parse_mode="Markdown")
+    # 4. Финальное обновление сообщения
+    await asyncio.sleep(0.7)
+    await msg.edit_text(f"🎰 <b>[ {' | '.join(res)} ]</b>\n\n{win_text}", parse_mode="HTML")
 
 @dp.message(Command("топ", prefix="+"))
 async def top_players(message: types.Message):
