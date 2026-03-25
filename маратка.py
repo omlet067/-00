@@ -19,12 +19,18 @@ ITEMS = {
     "🏢 майнинг_отель": [100000, 7000, "Ферма в подвале | Доход: 7000 GC/час"]
 }
 
+# --- СИСТЕМА ДАННЫХ (ОПТИМИЗИРОВАННАЯ) ---
 users = {}
+db_is_dirty = False # Флаг: нужно ли сохранять данные?
 
-# --- СИСТЕМА ДАННЫХ ---
 def save_db():
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, ensure_ascii=False, indent=4)
+    global db_is_dirty
+    try:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, ensure_ascii=False, indent=4)
+        db_is_dirty = False
+    except Exception as e:
+        print(f"❌ Ошибка сохранения: {e}")
 
 def load_db():
     global users
@@ -32,17 +38,21 @@ def load_db():
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 users = json.load(f)
-        except: users = {}
+        except:
+            users = {}
 
 def get_u(user: types.User):
+    global db_is_dirty
     uid = str(user.id)
     if uid not in users:
         users[uid] = {
             "name": user.first_name,
             "coins": 1000,
             "inventory": [],
-            "last_work": 0
+            "last_work": 0,
+            "last_bonus": 0
         }
+        db_is_dirty = True # Нового юзера надо сохранить
     return users[uid]
 
 # --- ВИЗУАЛЬНЫЕ КОМАНДЫ ---
