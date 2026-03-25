@@ -57,29 +57,32 @@ def get_u(user: types.User):
 
 # --- ВИЗУАЛЬНЫЕ КОМАНДЫ ---
 
-@dp.message(Command("профиль", "баланс", prefix="+"))
+@dp.message(Command("профиль", prefix="."))
 async def profile_visual(message: types.Message):
-    u = get_u(message.from_user)
+    u = get_u(message.from_user) # get_u сам создаст юзера, если его нет
     
-    # Визуальное оформление инвентаря
-    if u["inventory"]:
-        # Оставляем только эмодзи для компактности
-        inv_icons = " ".join([i.split()[0] for i in u["inventory"] if len(i.split()) > 0])
-    else:
-        inv_icons = "▫️ Пусто"
+    # Считаем доход от вещей в инвентаре
+    total_income = 0
+    inventory = u.get("inventory", [])
+    for item in inventory:
+        if item in ITEMS:
+            total_income += ITEMS[item][1]
 
-    # Разделитель и статус авторитета
-    status = "👑 Олигарх" if u["coins"] > 50000 else "☹️ Бомж"
-    line = "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+    # Форматируем инвентарь (если пустой — пишем "Пусто")
+    inv_text = ", ".join(inventory) if inventory else "отсутствует"
+    
+    # Собираем текст (используем .get() чтобы не было ошибок если поля нет)
+    text = (
+        f"👤 <b>ПРОФИЛЬ: {u.get('name', 'Игрок')}</b>\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"💰 Баланс: <code>{u.get('coins', 0):,} GC</code>\n"
+        f"📈 Доход: <code>{total_income:,} GC/час</code>\n"
+        f"🎒 Инвентарь: <i>{inv_text}</i>\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"🆔 ID: <code>{message.from_user.id}</code>"
+    ).replace(",", " ") # Красивые пробелы в числах
 
-    text = (f"👤 **{u['name']}**\n"
-            f"┣ {status}\n"
-            f"┣ {line}\n"
-            f"┣ 💰 ` {u['coins']} GC `\n"
-            f"┣ {line}\n"
-            f"┣ 🎒 **ИНВЕНТАРЬ**\n"
-            f"┗ {inv_icons}")
-    await message.reply(text, parse_mode="Markdown")
+    await message.answer(text, parse_mode="HTML")
 
 @dp.message(Command("магазин", "маркет", prefix="."))
 async def shop_visual(message: types.Message):
