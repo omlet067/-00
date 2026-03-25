@@ -170,6 +170,30 @@ async def info_cmd(message: types.Message):
     
     await message.answer(text, parse_mode="HTML")
 
+@dp.message(Command("удалить_аккаунт", prefix="."))
+async def delete_my_profile(message: types.Message):
+    global db_is_dirty
+    uid = str(message.from_user.id)
+    args = message.text.split()
+    
+    if uid not in users:
+        return await message.reply("❌ У тебя и так нет профиля в базе.")
+
+    # Проверка на подтверждение (нужно написать .удалить_аккаунт ДА)
+    if len(args) < 2 or args[1].upper() != "ДА":
+        return await message.reply(
+            "⚠️ <b>ВНИМАНИЕ!</b>\n"
+            "Это удалит твой баланс, инвентарь и все достижения навсегда.\n\n"
+            "Чтобы подтвердить, напиши: <code>.удалить_аккаунт ДА</code>", 
+            parse_mode="HTML"
+        )
+    
+    # Удаляем юзера из словаря
+    del users[uid]
+    db_is_dirty = True # Помечаем, что надо сохранить файл
+    
+    await message.answer("🗑 <b>Твой профиль был полностью удален.</b>\nДо встречи!", parse_mode="HTML")
+
 @dp.message(Command("работа", prefix="+"))
 async def work_visual(message: types.Message):
     u = get_u(message.from_user)
