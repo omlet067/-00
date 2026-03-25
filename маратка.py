@@ -56,31 +56,43 @@ def get_u(user: types.User):
     return users[uid]
 
 # --- ВИЗУАЛЬНЫЕ КОМАНДЫ ---
-
 @dp.message(Command("профиль", prefix="."))
 async def profile_visual(message: types.Message):
-    u = get_u(message.from_user) # get_u сам создаст юзера, если его нет
+    args = message.text.split()
     
-    # Считаем доход от вещей в инвентаре
+    # Определяем, чей профиль смотрим
+    if len(args) > 1 and args[1].isdigit():
+        target_id = args[1] # Смотрим чужой ID
+    else:
+        target_id = str(message.from_user.id) # Смотрим свой
+
+    # Проверяем, есть ли такой игрок в базе
+    if target_id not in users:
+        return await message.reply("❌ Игрок с таким ID не найден в базе данных.")
+
+    u = users[target_id]
+    
+    # Считаем доход
     total_income = 0
     inventory = u.get("inventory", [])
     for item in inventory:
         if item in ITEMS:
             total_income += ITEMS[item][1]
 
-    # Форматируем инвентарь (если пустой — пишем "Пусто")
     inv_text = ", ".join(inventory) if inventory else "отсутствует"
     
-    # Собираем текст (используем .get() чтобы не было ошибок если поля нет)
+    # Экранируем имя от спецсимволов HTML
+    name = u.get('name', 'Игрок').replace('<', '&lt;').replace('>', '&gt;')
+
     text = (
-        f"👤 <b>ПРОФИЛЬ: {u.get('name', 'Игрок')}</b>\n"
+        f"👤 <b>ПРОФИЛЬ: {name}</b>\n"
         f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
         f"💰 Баланс: <code>{u.get('coins', 0):,} GC</code>\n"
         f"📈 Доход: <code>{total_income:,} GC/час</code>\n"
         f"🎒 Инвентарь: <i>{inv_text}</i>\n"
         f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
-        f"🆔 ID: <code>{message.from_user.id}</code>"
-    ).replace(",", " ") # Красивые пробелы в числах
+        f"🆔 ID: <code>{target_id}</code>"
+    ).replace(",", " ")
 
     await message.answer(text, parse_mode="HTML")
 
