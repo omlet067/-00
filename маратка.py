@@ -3,7 +3,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 ADMIN_ID = 7560933378 
 
-TOKEN = "BOT_TOKEN"
+TOKEN = os.getenv("TYCOON_TOKEN")
 DB_FILE = "economy_visual.json"
 
 bot = Bot(token=TOKEN)
