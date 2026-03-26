@@ -65,18 +65,8 @@ def get_u(user: types.User):
     return users[uid]
 
 # --- КОМАНДЫ ---
-# --- СТИЛЬНЫЙ МАГАЗИН И ПРЕДМЕТЫ (С ПОЛНЫМИ ОПИСАНИЯМИ) ---
-ITEMS = {
-    "⚡энергетик": [6000, 0, "🥤 Энергетический напиток | Дарует удачу в казино на 3 минуты | Одноразовый"],
-    "👟подкрадули": [1500, 0, "👟 Стильные кеды | +100 к крутости | Не приносят дохода, но ты выглядишь шикарно"],
-    "⛺палатка": [5000, 50, "🏕 Лесная палатка | Пассивный доход: 50 GC/час | Окупаемость: ~4 дня"],
-    "📦пункт_wb": [25000, 200, "📦 Собственный пункт выдачи Wildberries | Пассивный доход: 200 GC/час | Окупаемость: ~5 дней"],
-    "🏢майнинг_отель": [150000, 800, "🏭 Майнинг-ферма в подвале | Пассивный доход: 800 GC/час | Окупаемость: ~7.8 дней"],
-    "🚀стартап": [1000000, 5000, "🚀 IT-стартап 'Glitch Corp' | Пассивный доход: 5 000 GC/час | Окупаемость: ~8.3 дней"],
-    "👑статус_олигарха": [9999999, 0, "👑 Элитный статус | Подтверждение твоего богатства | Доступ в закрытый клуб олигархов"]
-}
 
-# --- ИСПРАВЛЕННЫЙ МАГАЗИН (С КРАСИВЫМИ ОПИСАНИЯМИ) ---
+# --- МАГАЗИН ---
 @dp.message(Command("магазин", "маркет", prefix="."))
 async def shop_visual(message: types.Message):
     text = "🛒 <b>ГЛИТЧ-МАРКЕТ</b>\n"
@@ -114,7 +104,7 @@ async def shop_visual(message: types.Message):
     
     await message.answer(text, parse_mode="HTML")
 
-# --- ИСПРАВЛЕННЫЙ ПРОФИЛЬ (С БОЛЕЕ ДЕТАЛЬНЫМ ИНВЕНТАРЕМ) ---
+# --- ПРОФИЛЬ ---
 @dp.message(Command("профиль", prefix="."))
 async def profile_visual(message: types.Message):
     args = message.text.split()
@@ -190,7 +180,7 @@ async def profile_visual(message: types.Message):
 
     await message.answer(text, parse_mode="HTML")
 
-# --- ИСПРАВЛЕННАЯ КОМАНДА КУПИТЬ (С ПОДРОБНЫМ ОТВЕТОМ) ---
+# --- КУПИТЬ ---
 @dp.message(Command("купить", prefix="."))
 async def buy_cmd(message: types.Message):
     u = get_u(message.from_user)
@@ -257,122 +247,23 @@ async def buy_cmd(message: types.Message):
         parse_mode="HTML"
     )
 
-@dp.message(Command("магазин", "маркет", prefix="."))
-async def shop_visual(message: types.Message):
-    text = "🛒 <b>ГЛИТЧ-МАРКЕТ</b>\n"
-    text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n"
-    
-    # Красивые названия для отображения
-    display_names = {
-        "⚡энергетик": "⚡ ЭНЕРГЕТИК",
-        "👟подкрадули": "👟 ПОДКРАДУЛИ", 
-        "⛺палатка": "⛺ ПАЛАТКА",
-        "📦пункт_wb": "📦 ПУНКТ WB",
-        "🏢майнинг_отель": "🏢 МАЙНИНГ-ОТЕЛЬ",
-        "🚀стартап": "🚀 СТАРТАП",
-        "👑статус_олигарха": "👑 СТАТУС ОЛИГАРХА"
-    }
-    
-    for item, info in ITEMS.items():
-        price = f"{info[0]:,} GC".replace(",", " ")
-        income = f"+{info[1]} GC/час" if info[1] > 0 else "▫️ Без дохода"
-        
-        # Красивое название для вывода
-        nice_name = display_names.get(item, item)
-        
-        # Команда для покупки
-        cmd_name = item.replace("⚡", "").replace("👟", "").replace("⛺", "").replace("📦", "").replace("🏢", "").replace("🚀", "").replace("👑", "")
-        
-        text += (f"🔹 <b>{nice_name}</b>\n"
-                 f"┣ Цена: <code>{price}</code>\n"
-                 f"┣ {income}\n"
-                 f"┣ 📝 {info[2]}\n"
-                 f"┗ <code>.купить {cmd_name}</code>\n\n")
-    
-    text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
-    text += "💡 <i>Подсказка: бизнесы приносят доход каждый час автоматически!</i>"
-    
-    await message.answer(text, parse_mode="HTML")
+# --- ПИТЬ (ЭНЕРГЕТИК) ---
 @dp.message(Command("пить", prefix="."))
 async def drink_energy(message: types.Message):
     u = get_u(message.from_user)
     
-    if "⚡ энергетик" not in u["inventory"]:
-        return await message.reply("🛒 Сначала купи его в <code>.маркет</code>!", parse_mode="HTML")
+    if "⚡энергетик" not in u["inventory"]:
+        return await message.reply("🛒 Сначала купи энергетик в <code>.маркет</code>!", parse_mode="HTML")
     
-    u["inventory"].remove("⚡ энергетик")
-    u["luck_until"] = time.time() + 180
+    u["inventory"].remove("⚡энергетик")
+    u["luck_until"] = time.time() + 180  # 3 минуты удачи
     
     global db_is_dirty
     db_is_dirty = True
     
-    await message.reply("🥤 <b>Глитч-Раш выпит!</b>\nТвои чувства обострены. Удача в казино повышена на 3 минуты! 🔥", parse_mode="HTML")
+    await message.reply("🥤 <b>Глитч-Раш выпит!</b>\n🍀 Твои чувства обострены. Удача в казино повышена на 3 минуты! 🔥", parse_mode="HTML")
 
-@dp.message(Command("купить", prefix="."))
-async def buy_cmd(message: types.Message):
-    u = get_u(message.from_user)
-    args = message.text.split()
-    
-    if len(args) < 2: 
-        return await message.reply("❌ Напиши, что хочешь купить!\nПример: <code>.купить энергетик</code>", parse_mode="HTML")
-    
-    target = args[1].lower()
-    
-    # Ищем подходящий предмет
-    item_key = None
-    for name in ITEMS:
-        clean_name = name.replace("⚡", "").replace("👟", "").replace("⛺", "").replace("📦", "").replace("🏢", "").replace("🚀", "").replace("👑", "").lower()
-        
-        if target in clean_name or clean_name in target:
-            item_key = name
-            break
-            
-    if not item_key: 
-        return await message.reply("❓ Такого товара нет в магазине. Проверь <code>.маркет</code>", parse_mode="HTML")
-    
-    price = ITEMS[item_key][0]
-    description = ITEMS[item_key][2]
-    
-    if u["coins"] < price: 
-        need = price - u["coins"]
-        return await message.reply(f"❌ Недостаточно GC!\n💰 Нужно: <code>{price} GC</code>\n💸 Не хватает: <code>{need} GC</code>\n\n💡 Совет: используй <code>.работа</code> или выиграй в <code>.казино</code>", parse_mode="HTML")
-    
-    # Списываем деньги и добавляем в инвентарь
-    u["coins"] -= price
-    u["inventory"].append(item_key)
-    save_db()
-    
-    # Красивое название для ответа
-    display_names = {
-        "⚡энергетик": "⚡ Энергетик",
-        "👟подкрадули": "👟 Подкрадули",
-        "⛺палатка": "⛺ Палатка",
-        "📦пункт_wb": "📦 Пункт WB",
-        "🏢майнинг_отель": "🏢 Майнинг-отель",
-        "🚀стартап": "🚀 Стартап",
-        "👑статус_олигарха": "👑 Статус олигарха"
-    }
-    nice_name = display_names.get(item_key, item_key)
-    
-    # Эффект покупки
-    effect_text = ""
-    if item_key == "⚡энергетик":
-        effect_text = "\n✨ <i>Используй .пить чтобы активировать удачу!</i>"
-    elif ITEMS[item_key][1] > 0:
-        effect_text = f"\n📈 <i>Теперь ты получаешь +{ITEMS[item_key][1]} GC каждый час!</i>"
-    elif item_key == "👑статус_олигарха":
-        effect_text = "\n👑 <i>Теперь ты официально олигарх! Все в чате знают твой статус.</i>"
-    
-    await message.reply(
-        f"✅ <b>ПОКУПКА УСПЕШНА!</b>\n"
-        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
-        f"🎁 Приобретено: <b>{nice_name}</b>\n"
-        f"💰 Цена: <code>{price} GC</code>\n"
-        f"📝 Описание: {description}{effect_text}\n"
-        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
-        f"💳 Остаток: <code>{u['coins']:,} GC</code>".replace(",", " "), 
-        parse_mode="HTML"
-
+# --- ИНФО ---
 @dp.message(Command("инфо", "помощь", "help", prefix="."))
 async def info_cmd(message: types.Message):
     text = (
@@ -394,6 +285,7 @@ async def info_cmd(message: types.Message):
     )
     await message.answer(text, parse_mode="HTML")
 
+# --- УДАЛИТЬ АККАУНТ ---
 @dp.message(Command("удалить_аккаунт", prefix="."))
 async def delete_my_profile(message: types.Message):
     global db_is_dirty
@@ -416,6 +308,7 @@ async def delete_my_profile(message: types.Message):
     
     await message.answer("🗑 <b>Твой профиль был полностью удален.</b>\nДо встречи!", parse_mode="HTML")
 
+# --- РАБОТА ---
 @dp.message(Command("работа", prefix="."))
 async def work_cmd(message: types.Message):
     u = get_u(message.from_user)
@@ -442,6 +335,7 @@ async def work_cmd(message: types.Message):
     job = random.choice(jobs)
     await message.reply(f"⚒ Ты {job} и получил `{salary} GC`!", parse_mode="Markdown")
 
+# --- КАЗИНО ---
 @dp.message(Command("казино", "слоты", prefix="."))
 async def casino_visual(message: types.Message):
     u = get_u(message.from_user)
@@ -508,6 +402,7 @@ async def casino_visual(message: types.Message):
     await asyncio.sleep(0.5)
     await msg.edit_text(f"🎰 <b>[ {' | '.join(res)} ]</b>\n\n{win_text}{luck_status}", parse_mode="HTML")
 
+# --- ТОП ---
 @dp.message(Command("топ", prefix="."))
 async def top_players(message: types.Message):
     load_db()
@@ -530,6 +425,7 @@ async def top_players(message: types.Message):
     text += "\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
     await message.answer(text, parse_mode="HTML")
 
+# --- ПЕРЕВОД ---
 @dp.message(Command("передать", "дать", prefix="."))
 async def transfer_coins_visual(message: types.Message):
     if not message.reply_to_message:
@@ -567,6 +463,7 @@ async def transfer_coins_visual(message: types.Message):
     
     await message.reply(final_text, parse_mode="HTML")
 
+# --- ЗАЧИСЛИТЬ (АДМИН) ---
 @dp.message(Command("зачислить", prefix="."))
 async def set_balance(message: types.Message):
     if message.from_user.id != ADMIN_ID:
