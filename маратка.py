@@ -11,13 +11,13 @@ dp = Dispatcher()
 
 # --- СТИЛЬНЫЙ МАГАЗИН И ПРЕДМЕТЫ ---
 ITEMS = {
-    "⚡ энергетик": [6000, 0, "Разовый флекс (в разработке)"],
-    "👟 подкрадули": [1500, 0, "Лютый стиль | Без дохода"],
-    "⛺ палатка": [5000, 50, "Бизнес 'в лесу' | Доход: 50 GC/час"],
-    "📦 пункт_wb": [25000, 200, "Пункт выдачи | Доход: 200 GC/час"],
-    "🏢 майнинг_отель": [150000, 800, "Ферма в подвале | Доход: 800 GC/час"],
-    "🚀 стартап": [1000000, 5000, "Глитч-корпорация | Доход: 5 000 GC/час"],
-    "👑 статус_олигарха": [9999999, 0, "Статус очень богатого человека в чате"]
+    "⚡энергетик": [6000, 0, "🥤 Энергетический напиток | Дарует удачу в казино на 3 минуты | Одноразовый"],
+    "👟подкрадули": [1500, 0, "👟 Стильные кеды | +100 к крутости | Не приносят дохода, но ты выглядишь шикарно"],
+    "⛺палатка": [5000, 50, "🏕 Лесная палатка | Пассивный доход: 50 GC/час | Окупаемость: ~4 дня"],
+    "📦пункт_wb": [25000, 200, "📦 Собственный пункт выдачи Wildberries | Пассивный доход: 200 GC/час | Окупаемость: ~5 дней"],
+    "🏢майнинг_отель": [150000, 800, "🏭 Майнинг-ферма в подвале | Пассивный доход: 800 GC/час | Окупаемость: ~7.8 дней"],
+    "🚀стартап": [1000000, 5000, "🚀 IT-стартап 'Glitch Corp' | Пассивный доход: 5 000 GC/час | Окупаемость: ~8.3 дней"],
+    "👑статус_олигарха": [9999999, 0, "👑 Элитный статус | Подтверждение твоего богатства | Доступ в закрытый клуб олигархов"]
 }
 
 # --- СИСТЕМА ДАННЫХ ---
@@ -65,6 +65,56 @@ def get_u(user: types.User):
     return users[uid]
 
 # --- КОМАНДЫ ---
+# --- СТИЛЬНЫЙ МАГАЗИН И ПРЕДМЕТЫ (С ПОЛНЫМИ ОПИСАНИЯМИ) ---
+ITEMS = {
+    "⚡энергетик": [6000, 0, "🥤 Энергетический напиток | Дарует удачу в казино на 3 минуты | Одноразовый"],
+    "👟подкрадули": [1500, 0, "👟 Стильные кеды | +100 к крутости | Не приносят дохода, но ты выглядишь шикарно"],
+    "⛺палатка": [5000, 50, "🏕 Лесная палатка | Пассивный доход: 50 GC/час | Окупаемость: ~4 дня"],
+    "📦пункт_wb": [25000, 200, "📦 Собственный пункт выдачи Wildberries | Пассивный доход: 200 GC/час | Окупаемость: ~5 дней"],
+    "🏢майнинг_отель": [150000, 800, "🏭 Майнинг-ферма в подвале | Пассивный доход: 800 GC/час | Окупаемость: ~7.8 дней"],
+    "🚀стартап": [1000000, 5000, "🚀 IT-стартап 'Glitch Corp' | Пассивный доход: 5 000 GC/час | Окупаемость: ~8.3 дней"],
+    "👑статус_олигарха": [9999999, 0, "👑 Элитный статус | Подтверждение твоего богатства | Доступ в закрытый клуб олигархов"]
+}
+
+# --- ИСПРАВЛЕННЫЙ МАГАЗИН (С КРАСИВЫМИ ОПИСАНИЯМИ) ---
+@dp.message(Command("магазин", "маркет", prefix="."))
+async def shop_visual(message: types.Message):
+    text = "🛒 <b>ГЛИТЧ-МАРКЕТ</b>\n"
+    text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n"
+    
+    # Красивые названия для отображения
+    display_names = {
+        "⚡энергетик": "⚡ ЭНЕРГЕТИК",
+        "👟подкрадули": "👟 ПОДКРАДУЛИ", 
+        "⛺палатка": "⛺ ПАЛАТКА",
+        "📦пункт_wb": "📦 ПУНКТ WB",
+        "🏢майнинг_отель": "🏢 МАЙНИНГ-ОТЕЛЬ",
+        "🚀стартап": "🚀 СТАРТАП",
+        "👑статус_олигарха": "👑 СТАТУС ОЛИГАРХА"
+    }
+    
+    for item, info in ITEMS.items():
+        price = f"{info[0]:,} GC".replace(",", " ")
+        income = f"+{info[1]} GC/час" if info[1] > 0 else "▫️ Без дохода"
+        
+        # Красивое название для вывода
+        nice_name = display_names.get(item, item)
+        
+        # Команда для покупки
+        cmd_name = item.replace("⚡", "").replace("👟", "").replace("⛺", "").replace("📦", "").replace("🏢", "").replace("🚀", "").replace("👑", "")
+        
+        text += (f"🔹 <b>{nice_name}</b>\n"
+                 f"┣ Цена: <code>{price}</code>\n"
+                 f"┣ {income}\n"
+                 f"┣ 📝 {info[2]}\n"
+                 f"┗ <code>.купить {cmd_name}</code>\n\n")
+    
+    text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+    text += "💡 <i>Подсказка: бизнесы приносят доход каждый час автоматически!</i>"
+    
+    await message.answer(text, parse_mode="HTML")
+
+# --- ИСПРАВЛЕННЫЙ ПРОФИЛЬ (С БОЛЕЕ ДЕТАЛЬНЫМ ИНВЕНТАРЕМ) ---
 @dp.message(Command("профиль", prefix="."))
 async def profile_visual(message: types.Message):
     args = message.text.split()
@@ -79,46 +129,170 @@ async def profile_visual(message: types.Message):
 
     u = users[target_id]
     
+    # Считаем доход и собираем информацию о предметах
     total_income = 0
     inventory = u.get("inventory", [])
+    business_items = []
+    decorative_items = []
+    
     for item in inventory:
         if item in ITEMS:
-            total_income += ITEMS[item][1]
+            income = ITEMS[item][1]
+            total_income += income
+            if income > 0:
+                # Красивые названия для бизнесов
+                business_names = {
+                    "⛺палатка": "⛺ Палатка",
+                    "📦пункт_wb": "📦 Пункт WB", 
+                    "🏢майнинг_отель": "🏢 Майнинг-отель",
+                    "🚀стартап": "🚀 Стартап"
+                }
+                business_items.append(f"{business_names.get(item, item)} (+{income} GC/час)")
+            else:
+                # Декоративные предметы
+                deco_names = {
+                    "⚡энергетик": "⚡ Энергетик",
+                    "👟подкрадули": "👟 Подкрадули",
+                    "👑статус_олигарха": "👑 Статус олигарха"
+                }
+                decorative_items.append(deco_names.get(item, item))
 
-    inv_text = ", ".join(inventory) if inventory else "отсутствует"
+    # Формируем текст инвентаря
+    inv_parts = []
+    if business_items:
+        inv_parts.append("🏢 <b>БИЗНЕСЫ:</b>\n" + "\n".join([f"  • {item}" for item in business_items]))
+    if decorative_items:
+        inv_parts.append("✨ <b>ПРЕДМЕТЫ:</b>\n" + "\n".join([f"  • {item}" for item in decorative_items]))
+    
+    inv_text = "\n\n".join(inv_parts) if inv_parts else "🎒 Пусто"
+    
     name = u.get('name', 'Игрок').replace('<', '&lt;').replace('>', '&gt;')
+    
+    # Прогресс до следующего бизнеса (для мотивации)
+    next_business = ""
+    if u.get('coins', 0) < 5000:
+        need = 5000 - u['coins']
+        next_business = f"\n💡 До палатки: <code>{need} GC</code>"
+    elif u.get('coins', 0) < 25000:
+        need = 25000 - u['coins']
+        next_business = f"\n💡 До пункта WB: <code>{need} GC</code>"
 
     text = (
         f"👤 <b>ПРОФИЛЬ: {name}</b>\n"
         f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
         f"💰 Баланс: <code>{u.get('coins', 0):,} GC</code>\n"
-        f"📈 Доход: <code>{total_income:,} GC/час</code>\n"
-        f"🎒 Инвентарь: <i>{inv_text}</i>\n"
+        f"📈 Пассивный доход: <code>{total_income:,} GC/час</code>\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"{inv_text}{next_business}\n"
         f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
         f"🆔 ID: <code>{target_id}</code>"
     ).replace(",", " ")
 
     await message.answer(text, parse_mode="HTML")
 
+# --- ИСПРАВЛЕННАЯ КОМАНДА КУПИТЬ (С ПОДРОБНЫМ ОТВЕТОМ) ---
+@dp.message(Command("купить", prefix="."))
+async def buy_cmd(message: types.Message):
+    u = get_u(message.from_user)
+    args = message.text.split()
+    
+    if len(args) < 2: 
+        return await message.reply("❌ Напиши, что хочешь купить!\nПример: <code>.купить энергетик</code>", parse_mode="HTML")
+    
+    target = args[1].lower()
+    
+    # Ищем подходящий предмет
+    item_key = None
+    for name in ITEMS:
+        clean_name = name.replace("⚡", "").replace("👟", "").replace("⛺", "").replace("📦", "").replace("🏢", "").replace("🚀", "").replace("👑", "").lower()
+        
+        if target in clean_name or clean_name in target:
+            item_key = name
+            break
+            
+    if not item_key: 
+        return await message.reply("❓ Такого товара нет в магазине. Проверь <code>.маркет</code>", parse_mode="HTML")
+    
+    price = ITEMS[item_key][0]
+    description = ITEMS[item_key][2]
+    
+    if u["coins"] < price: 
+        need = price - u["coins"]
+        return await message.reply(f"❌ Недостаточно GC!\n💰 Нужно: <code>{price} GC</code>\n💸 Не хватает: <code>{need} GC</code>\n\n💡 Совет: используй <code>.работа</code> или выиграй в <code>.казино</code>", parse_mode="HTML")
+    
+    # Списываем деньги и добавляем в инвентарь
+    u["coins"] -= price
+    u["inventory"].append(item_key)
+    save_db()
+    
+    # Красивое название для ответа
+    display_names = {
+        "⚡энергетик": "⚡ Энергетик",
+        "👟подкрадули": "👟 Подкрадули",
+        "⛺палатка": "⛺ Палатка",
+        "📦пункт_wb": "📦 Пункт WB",
+        "🏢майнинг_отель": "🏢 Майнинг-отель",
+        "🚀стартап": "🚀 Стартап",
+        "👑статус_олигарха": "👑 Статус олигарха"
+    }
+    nice_name = display_names.get(item_key, item_key)
+    
+    # Эффект покупки
+    effect_text = ""
+    if item_key == "⚡энергетик":
+        effect_text = "\n✨ <i>Используй .пить чтобы активировать удачу!</i>"
+    elif ITEMS[item_key][1] > 0:
+        effect_text = f"\n📈 <i>Теперь ты получаешь +{ITEMS[item_key][1]} GC каждый час!</i>"
+    elif item_key == "👑статус_олигарха":
+        effect_text = "\n👑 <i>Теперь ты официально олигарх! Все в чате знают твой статус.</i>"
+    
+    await message.reply(
+        f"✅ <b>ПОКУПКА УСПЕШНА!</b>\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"🎁 Приобретено: <b>{nice_name}</b>\n"
+        f"💰 Цена: <code>{price} GC</code>\n"
+        f"📝 Описание: {description}{effect_text}\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"💳 Остаток: <code>{u['coins']:,} GC</code>".replace(",", " "), 
+        parse_mode="HTML"
+    )
+
 @dp.message(Command("магазин", "маркет", prefix="."))
 async def shop_visual(message: types.Message):
     text = "🛒 <b>ГЛИТЧ-МАРКЕТ</b>\n"
     text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n"
     
+    # Красивые названия для отображения
+    display_names = {
+        "⚡энергетик": "⚡ ЭНЕРГЕТИК",
+        "👟подкрадули": "👟 ПОДКРАДУЛИ", 
+        "⛺палатка": "⛺ ПАЛАТКА",
+        "📦пункт_wb": "📦 ПУНКТ WB",
+        "🏢майнинг_отель": "🏢 МАЙНИНГ-ОТЕЛЬ",
+        "🚀стартап": "🚀 СТАРТАП",
+        "👑статус_олигарха": "👑 СТАТУС ОЛИГАРХА"
+    }
+    
     for item, info in ITEMS.items():
         price = f"{info[0]:,} GC".replace(",", " ")
         income = f"+{info[1]} GC/час" if info[1] > 0 else "▫️ Без дохода"
-        cmd_name = item.split()[-1]
         
-        text += (f"🔹 <b>{item.upper()}</b>\n"
+        # Красивое название для вывода
+        nice_name = display_names.get(item, item)
+        
+        # Команда для покупки
+        cmd_name = item.replace("⚡", "").replace("👟", "").replace("⛺", "").replace("📦", "").replace("🏢", "").replace("🚀", "").replace("👑", "")
+        
+        text += (f"🔹 <b>{nice_name}</b>\n"
                  f"┣ Цена: <code>{price}</code>\n"
-                 f"┣ <code>{income}</code>\n"
-                 f"┣ {info[2]}\n"
+                 f"┣ {income}\n"
+                 f"┣ 📝 {info[2]}\n"
                  f"┗ <code>.купить {cmd_name}</code>\n\n")
     
-    text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+    text += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+    text += "💡 <i>Подсказка: бизнесы приносят доход каждый час автоматически!</i>"
+    
     await message.answer(text, parse_mode="HTML")
-
 @dp.message(Command("пить", prefix="."))
 async def drink_energy(message: types.Message):
     u = get_u(message.from_user)
@@ -140,13 +314,16 @@ async def buy_cmd(message: types.Message):
     args = message.text.split()
     
     if len(args) < 2: 
-        return await message.reply("❌ Напиши, что хочешь купить!\nПример: <code>.купить wb</code>", parse_mode="HTML")
+        return await message.reply("❌ Напиши, что хочешь купить!\nПример: <code>.купить энергетик</code>", parse_mode="HTML")
     
     target = args[1].lower()
     
+    # Ищем подходящий предмет
     item_key = None
     for name in ITEMS:
-        if target in name.lower():
+        clean_name = name.replace("⚡", "").replace("👟", "").replace("⛺", "").replace("📦", "").replace("🏢", "").replace("🚀", "").replace("👑", "").lower()
+        
+        if target in clean_name or clean_name in target:
             item_key = name
             break
             
@@ -154,15 +331,47 @@ async def buy_cmd(message: types.Message):
         return await message.reply("❓ Такого товара нет в магазине. Проверь <code>.маркет</code>", parse_mode="HTML")
     
     price = ITEMS[item_key][0]
+    description = ITEMS[item_key][2]
     
     if u["coins"] < price: 
-        return await message.reply(f"❌ Недостаточно GC! Нужно: <code>{price}</code>", parse_mode="HTML")
+        need = price - u["coins"]
+        return await message.reply(f"❌ Недостаточно GC!\n💰 Нужно: <code>{price} GC</code>\n💸 Не хватает: <code>{need} GC</code>\n\n💡 Совет: используй <code>.работа</code> или выиграй в <code>.казино</code>", parse_mode="HTML")
     
+    # Списываем деньги и добавляем в инвентарь
     u["coins"] -= price
     u["inventory"].append(item_key)
     save_db()
     
-    await message.reply(f"✅ Успешно куплено: <b>{item_key}</b>\nТвой баланс: <code>{u['coins']} GC</code>", parse_mode="HTML")
+    # Красивое название для ответа
+    display_names = {
+        "⚡энергетик": "⚡ Энергетик",
+        "👟подкрадули": "👟 Подкрадули",
+        "⛺палатка": "⛺ Палатка",
+        "📦пункт_wb": "📦 Пункт WB",
+        "🏢майнинг_отель": "🏢 Майнинг-отель",
+        "🚀стартап": "🚀 Стартап",
+        "👑статус_олигарха": "👑 Статус олигарха"
+    }
+    nice_name = display_names.get(item_key, item_key)
+    
+    # Эффект покупки
+    effect_text = ""
+    if item_key == "⚡энергетик":
+        effect_text = "\n✨ <i>Используй .пить чтобы активировать удачу!</i>"
+    elif ITEMS[item_key][1] > 0:
+        effect_text = f"\n📈 <i>Теперь ты получаешь +{ITEMS[item_key][1]} GC каждый час!</i>"
+    elif item_key == "👑статус_олигарха":
+        effect_text = "\n👑 <i>Теперь ты официально олигарх! Все в чате знают твой статус.</i>"
+    
+    await message.reply(
+        f"✅ <b>ПОКУПКА УСПЕШНА!</b>\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"🎁 Приобретено: <b>{nice_name}</b>\n"
+        f"💰 Цена: <code>{price} GC</code>\n"
+        f"📝 Описание: {description}{effect_text}\n"
+        f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        f"💳 Остаток: <code>{u['coins']:,} GC</code>".replace(",", " "), 
+        parse_mode="HTML"
 
 @dp.message(Command("инфо", "помощь", "help", prefix="."))
 async def info_cmd(message: types.Message):
