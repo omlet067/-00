@@ -1,6 +1,7 @@
 import os, asyncio, random, json, time
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
+import time
 ADMIN_ID = 7560933378 
 
 TOKEN = os.getenv("TYCOON_TOKEN")
@@ -12,11 +13,13 @@ dp = Dispatcher()
 # --- СТИЛЬНЫЙ МАГАЗИН И ПРЕДМЕТЫ ---
 # Эмодзи обязательны для визуала
 ITEMS = {
-    "⚡ энергетик": [150, 0, "Разовый флекс (в разработке)"],
-    "👟 подкрадули": [1500, 0, "Лютый стиль +10 к уважению"],
-    "⛺ палатка": [5000, 250, "Бизнес 'в лесу' | Доход: 250 GC/час"],
-    "📦 пункт_wb": [15000, 900, "Пункт выдачи заказов | Доход: 900 GC/час"],
-    "🏢 майнинг_отель": [100000, 7000, "Ферма в подвале | Доход: 7000 GC/час"]
+    "⚡ энергетик": [6000, 0, "Разовый флекс (в разработке)"],
+    "👟 подкрадули": [1500, 0, "Лютый стиль | Без дохода"],
+    "⛺ палатка": [5000, 50, "Бизнес 'в лесу' | Доход: 50 GC/час"], # Окупаемость ~4 дня
+    "📦 пункт_wb": [25000, 200, "Пункт выдачи | Доход: 200 GC/час"], # Окупаемость ~5 дней
+    "🏢 майнинг_отель": [150000, 800, "Ферма в подвале | Доход: 800 GC/час"], # Окупаемость ~7 дней
+    "🚀 стартап": [1000000, 5000, "Глитч-корпорация | Доход: 5 000 GC/час"], # Для миллионеров
+    "👑 статус олигарха" : [9999999, 0 "Статус очень богатого человека в чате"]
 }
 
 # --- СИСТЕМА ДАННЫХ (ОПТИМИЗИРОВАННАЯ) ---
@@ -51,9 +54,18 @@ def get_u(user: types.User):
             "inventory": [],
             "last_work": 0,
             "last_bonus": 0
+            "luck_until": 0
+            "last_slots": 0
         }
         db_is_dirty = True # Нового юзера надо сохранить
+    else:
+        # Проверка новых полей для старых игроков
+        for key in ["luck_until", "last_slots"]:
+            if key not in users[uid]:
+                users[uid][key] = 0
+                db_is_dirty = True
     return users[uid]
+    
 
 # --- ВИЗУАЛЬНЫЕ КОМАНДЫ ---
 @dp.message(Command("профиль", prefix="."))
@@ -122,6 +134,21 @@ async def shop_visual(message: types.Message):
     
     # ОТПРАВЛЯЕМ ЧЕРЕЗ HTML (это важно!)
     await message.answer(text, parse_mode="HTML")
+
+@dp.message(Command("пить", prefix="."))
+async def drink_energy(message: types.Message):
+    u = get_u(message.from_user)
+    
+    if "⚡ энергетик" not in u["inventory"]:
+        return await message.reply("🛒 Сначала купи его в <code>.маркет</code>!", parse_mode="HTML")
+    
+    u["inventory"].remove("⚡ энергетик")
+    # Устанавливаем удачу на 10 минут от текущего момента
+    u["luck_until"] = time.time() + 180
+    
+    global db_is_dirty; db_is_dirty = True
+    
+    await message.reply("🥤 <b>Глитч-Раш выпит!</b>\nТвои чувства обострены. Удача в казино повышена на 3 минуты! 🔥", parse_mode="HTML")
 
 @dp.message(Command("купить", prefix="."))
 async def buy_cmd(message: types.Message):
@@ -226,52 +253,96 @@ async def work_visual(message: types.Message):
         ["💾 продал конфиг в Майне", "+600 GC"],
         ["🪙вложился в крипту", "+300 GC"],
         ["💦поработал(а) на трассе", "+5 GC"]
-    ]
+        ["🍔поел бургеры", "+200 GC"]
+        ["💸батя дал на додеп", "+300 GC"]
     job = random.choice(jobs)
     await message.reply(f"⚒ Ты **{job[0]}** и получил ` {salary} GC `!")
+
+max_bet = 50000 # Поставь предел, выше которого нельзя ставить
+    if bet > max_bet:
+        return await message.reply(f"⚠️ Максимальная ставка: <code>{max_bet} GC</code>", parse_mode="HTML")
+
+# Проверяем, действует ли еще удача
+    is_lucky = time.time() < u.get("luck_until", 0)
+    
+    # Если юзер под энергетиком, убираем самые плохие иконки из рандома
+    icons = ["💎", "🎰", "🍋", "🍒", "🔔"]
+    if not is_lucky:
+        icons.append("💩") # Какашка выпадает только трезвым :)
+        icons.append("⚙️")
+
+    res = [random.choice(icons) for _ in range(3)]
+    
+    # Дальше твой код с проверкой выигрыша...
 
 @dp.message(Command("казино", "слоты", prefix="."))
 async def casino_visual(message: types.Message):
     u = get_u(message.from_user)
+    now = time.time()
     args = message.text.split()
+
+    # 1. ПРОВЕРКА КД (10 секунд)
+    last_slots = u.get("last_slots", 0)
+    if now - last_slots < 10:
+        rem = int(10 - (now - last_slots))
+        return await message.reply(f"⏳ <b>Тормози!</b> Барабаны еще остывают. Жди {rem} сек.", parse_mode="HTML")
     
+    # 2. ПРОВЕРКА СТАВКИ
     if len(args) < 2 or not args[1].isdigit(): 
         return await message.reply("🎰 Введи ставку! Пример: <code>.слоты 100</code>", parse_mode="HTML")
-    
-    bet = int(args[1])
-    if bet > u["coins"] or bet <= 0: 
-        return await message.reply("❌ Недостаточно коинов для такой ставки!")
 
-    # Смайлики для анимации
-    slots_icons = ["💎", "🎰", "🍋", "🍒", "💩", "🔔", "⭐"]
+    bet = int(args[1])
+    if bet > 50000: 
+        return await message.reply("⚠️ Максимальная ставка в казино: <code>50 000 GC</code>", parse_mode="HTML")
+    if bet > u["coins"] or bet <= 0: 
+        return await message.reply("❌ Недостаточно GC на балансе!")
+
+    # 3. ЛОГИКА УДАЧИ (ЭНЕРГЕТИК)
+    is_lucky = now < u.get("luck_until", 0)
     
-    # 1. Создаем сообщение с анимацией
+    # Если юзер под энергосом — убираем какашку и шестеренку из списка
+    if is_lucky:
+        slots_icons = ["💎", "🎰", "🍋", "🍒", "🔔", "⭐"]
+    else:
+        slots_icons = ["💎", "🎰", "🍋", "🍒", "💩", "⚙️", "🔔"]
+
+    # Фиксируем время крутки и списываем ставку сразу
+    u["last_slots"] = now
+    u["coins"] -= bet
+    
+    # 4. ВИЗУАЛ (КРУЧЕНИЕ)
     msg = await message.answer("🎰 <b>[ 🎰 | 🎰 | 🎰 ]</b>\n<i>Крутим барабаны...</i>", parse_mode="HTML")
     
-    # 2. Имитация кручения (3 этапа)
-    for _ in range(3):
-        await asyncio.sleep(0.7) # Небольшая пауза между кадрами
+    # Сократил анимацию до 2 этапов, чтобы не спамить запросами к Telegram
+    for _ in range(2):
+        await asyncio.sleep(0.7)
         fake_res = [random.choice(slots_icons) for _ in range(3)]
         await msg.edit_text(f"🎰 <b>[ {' | '.join(fake_res)} ]</b>\n<i>Барабаны вращаются...</i>", parse_mode="HTML")
 
-    # 3. Финальный результат
-    res = [random.choice(slots_icons[:5]) for _ in range(3)] # Берем основные иконки
+    # 5. ФИНАЛЬНЫЙ РЕЗУЛЬТАТ
+    res = [random.choice(slots_icons) for _ in range(3)]
     
+    win = 0
     if res[0] == res[1] == res[2]:
-        u["coins"] += bet * 15
-        win_text = f"🔥 <b>ДЖЕКПОТ! x15</b>\nВыигрыш: <code>+{bet*15} GC</code>"
+        win = bet * 7 # Нерф до x7
+        win_text = f"🔥 <b>ДЖЕКПОТ! x7</b>\nВыигрыш: <code>+{win} GC</code>"
     elif res[0] == res[1] or res[1] == res[2] or res[0] == res[2]:
-        u["coins"] += bet * 2
-        win_text = f"✅ <b>Победа! x2</b>\nВыигрыш: <code>+{bet*2} GC</code>"
+        win = int(bet * 1.5) # Нерф до x1.5 (более стабильно)
+        win_text = f"✅ <b>Победа! x1.5</b>\nВыигрыш: <code>+{win} GC</code>"
     else:
-        u["coins"] -= bet
         win_text = f"❌ <b>Проигрыш!</b>\nПотеряно: <code>-{bet} GC</code>"
+
+    u["coins"] += win
     
-    save_db()
+    # Используем глобальный флаг для автосейва
+    global db_is_dirty
+    db_is_dirty = True
     
-    # 4. Финальное обновление сообщения
-    await asyncio.sleep(0.7)
-    await msg.edit_text(f"🎰 <b>[ {' | '.join(res)} ]</b>\n\n{win_text}", parse_mode="HTML")
+    # Добавляем плашку удачи в финальное сообщение
+    luck_status = "\n\n🍀 <i>Эффект удачи помог!</i>" if is_lucky else ""
+    
+    await asyncio.sleep(0.5)
+    await msg.edit_text(f"🎰 <b>[ {' | '.join(res)} ]</b>\n\n{win_text}{luck_status}", parse_mode="HTML")
 
 @dp.message(Command("топ", prefix="+"))
 async def top_players(message: types.Message):
@@ -314,6 +385,10 @@ async def transfer_coins_visual(message: types.Message):
     args = message.text.split()
     if len(args) < 2 or not args[1].isdigit():
         return await message.reply("⚠️ Формат: `.передать 500`")
+
+    tax = int(amount * 0.3) # 30% налог
+    final_amount = amount - tax
+    # Отдаем получателю final_amount, а у отправителя списываем полный amount
 
     amount = int(args[1])
 
